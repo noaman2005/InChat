@@ -31,7 +31,6 @@ export default function Feed() {
 
   const fetchTheories = async () => {
     try {
-      // Create a query that orders theories by createdAt in descending order
       const theoriesCollection = collection(db, 'theories');
       const theoriesQuery = query(theoriesCollection, orderBy('createdAt', 'desc')); // Latest first
 
@@ -148,7 +147,7 @@ export default function Feed() {
       </header>
       <hr className="border-t border-gray-300 mb-6 w-full" />
       <Navbar />
-      <div className="flex justify-center space-x-8">
+      <div className="flex justify-center space-x-8 flex-wrap">
         {/* Theories Section */}
         <div className="max-w-2xl w-full p-4">
           <main className="flex flex-col mt-2 space-y-4 overflow-y-auto">
@@ -189,18 +188,11 @@ export default function Feed() {
                       </svg>
                     </div>
                     <div className="flex items-center space-x-1 cursor-pointer hover:text-blue-600 transition-colors duration-200" onClick={() => handleShare(theory.id)}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-</svg>
-
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V3.75l6 6-6 6V12.75a9.75 9.75 0 1 0-9-9.75h9.75V3.75L9 9l6 6H3a9.75 9.75 0 0 0 0 19.5h12.75V21H3A9.75 9.75 0 0 0 15.75 9Z" />
+                      </svg>
                     </div>
                   </div>
-                  {activeCommentId === theory.id && (
-                    <div className="mt-4">
-                      <textarea placeholder="Leave a comment..." className="border rounded-lg p-2 w-full" />
-                      <button className="mt-2 bg-blue-500 text-white rounded-lg px-4 py-2">Comment</button>
-                    </div>
-                  )}
                 </div>
               ))
             )}
@@ -208,16 +200,30 @@ export default function Feed() {
         </div>
 
         {/* Suggested Users Section */}
-        <div className="h-max bg-white p-4">
-          <h2 className="font-bold mb-4">Suggested Users</h2>
-          <ul>
-            {suggestedUsers.map(user => (
-              <li key={user.id} className="flex items-center space-x-2 mb-2 cursor-pointer hover:bg-gray-100 rounded-lg p-2" onClick={() => selectUser(user)}>
-                <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName} className="w-10 h-10 rounded-full" />
-                <span className="font-medium">{user.displayName}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="max-w-xs w-full p-4">
+          <h2 className="text-lg font-bold mb-4">Suggested Users</h2>
+          <div className="bg-white shadow-md rounded-lg p-4">
+            {suggestedUsers.length === 0 ? (
+              <p>No suggested users.</p>
+            ) : (
+              suggestedUsers.map(user => (
+                <div key={user.id} className="flex items-center justify-between border-b border-gray-300 py-2">
+                  <img
+                    src={user.photoURL || '/default-avatar.png'}
+                    alt={user.displayName}
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <span className="ml-2 font-semibold">{user.displayName}</span>
+                  <button
+                    className="text-blue-500 hover:underline"
+                    onClick={() => selectUser(user)}
+                  >
+                    Follow
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </Layout>
