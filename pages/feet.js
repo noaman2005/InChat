@@ -6,6 +6,7 @@ import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import Layout from '@/components/Layout';
 import Navbar from '../components/Navbar';
+import { orderBy, query } from 'firebase/firestore';
 
 export default function Feed() {
   const router = useRouter();
@@ -13,8 +14,6 @@ export default function Feed() {
   const [theories, setTheories] = useState([]);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [likeCount, setLikeCount] = useState(0);
-
-  // New state for comment visibility
   const [activeCommentId, setActiveCommentId] = useState(null); // Track which theory's comment section is active
 
   useEffect(() => {
@@ -32,8 +31,11 @@ export default function Feed() {
 
   const fetchTheories = async () => {
     try {
+      // Create a query that orders theories by createdAt in descending order
       const theoriesCollection = collection(db, 'theories');
-      const theoriesSnapshot = await getDocs(theoriesCollection);
+      const theoriesQuery = query(theoriesCollection, orderBy('createdAt', 'desc')); // Latest first
+
+      const theoriesSnapshot = await getDocs(theoriesQuery);
 
       const theoriesList = await Promise.all(
         theoriesSnapshot.docs.map(async (theoryDoc) => {
@@ -110,12 +112,29 @@ export default function Feed() {
   };
 
   const toggleCommentSection = (id) => {
-    // Toggle the comment section for the specific theory
     if (activeCommentId === id) {
       setActiveCommentId(null); // Close if already open
     } else {
       setActiveCommentId(id); // Open the selected comment section
     }
+  };
+
+  // Function to generate the share URL for a theory
+  const generateShareUrl = (theoryId) => {
+    const baseUrl = window.location.origin; // Get the base URL of the current site
+    return `${baseUrl}/theory/${theoryId}`; // Assuming the theory details page is at /theory/[theoryId]
+  };
+
+  // Function to handle share button click
+  const handleShare = (theoryId) => {
+    const shareUrl = generateShareUrl(theoryId);
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        alert('Shareable link copied to clipboard: ' + shareUrl);
+      })
+      .catch((error) => {
+        console.error('Error copying shareable link:', error);
+      });
   };
 
   if (loading) {
@@ -169,25 +188,17 @@ export default function Feed() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
                       </svg>
                     </div>
-                    <div className="flex items-center space-x-1 cursor-pointer hover:text-blue-600 transition-colors duration-200">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-                      </svg>
+                    <div className="flex items-center space-x-1 cursor-pointer hover:text-blue-600 transition-colors duration-200" onClick={() => handleShare(theory.id)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+</svg>
 
                     </div>
                   </div>
-
-                  {/* Comment Section */}
                   {activeCommentId === theory.id && (
                     <div className="mt-4">
-                      <textarea
-                        className="w-full p-2 border rounded-lg"
-                        rows="3"
-                        placeholder="Write a comment..."
-                      />
-                      <button className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg">
-                        Submit
-                      </button>
+                      <textarea placeholder="Leave a comment..." className="border rounded-lg p-2 w-full" />
+                      <button className="mt-2 bg-blue-500 text-white rounded-lg px-4 py-2">Comment</button>
                     </div>
                   )}
                 </div>
@@ -197,23 +208,18 @@ export default function Feed() {
         </div>
 
         {/* Suggested Users Section */}
-        <aside className="max-w-xs w-full p-4">
-          <h2 className="font-bold text-blue-200 text-xl mb-4">Suggested Users</h2>
-          <ul className="space-y-2">
+        <div className="h-max bg-white p-4">
+          <h2 className="font-bold mb-4">Suggested Users</h2>
+          <ul>
             {suggestedUsers.map(user => (
-              <li
-                key={user.id}
-                className="flex items-center justify-between bg-gray-100 p-2 rounded-lg cursor-pointer hover:bg-gray-200"
-                onClick={() => selectUser(user)}
-              >
-                <span>{user.displayName}</span>
-                <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName} className="w-8 h-8 rounded-full" />
+              <li key={user.id} className="flex items-center space-x-2 mb-2 cursor-pointer hover:bg-gray-100 rounded-lg p-2" onClick={() => selectUser(user)}>
+                <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName} className="w-10 h-10 rounded-full" />
+                <span className="font-medium">{user.displayName}</span>
               </li>
             ))}
           </ul>
-        </aside>
+        </div>
       </div>
     </Layout>
   );
 }
-

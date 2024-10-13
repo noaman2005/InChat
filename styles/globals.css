@@ -4,21 +4,46 @@
 @tailwind components;
 @tailwind utilities;
 
-/* styles/globals.css */
-/* styles/globals.css */
+/* Body styles */
 body {
-    background-color: black;
-    /* Dark background */
-    color: black;
-    /* Default text color */
+    background-color: black; /* Dark background */
+    color: black; /* Default text color */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    font-family: 'Arial', sans-serif; /* Default font family */
 }
 
+/* Headings */
 h1,
 h2 {
-    font-family: 'Arial', sans-serif;
-    /* Example font */
+    font-family: 'Arial', sans-serif; /* Example font */
 }
 
+/* Responsive Heading Styles */
+h1 {
+    font-size: 2rem; /* Default size for larger screens */
+}
+
+h2 {
+    font-size: 1.5rem; /* Default size for larger screens */
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 640px) { /* Mobile devices */
+    h1 {
+        font-size: 1.5rem; /* Smaller size for mobile */
+    }
+
+    h2 {
+        font-size: 1.25rem; /* Smaller size for mobile */
+    }
+
+    body {
+        padding: 10px; /* Add padding for mobile */
+    }
+}
+
+/* Animation Styles */
 @keyframes spin-slow {
     0% {
         transform: scale(1) rotate(0deg);
@@ -38,3 +63,21 @@ h2 {
 }
 
 /* Custom styles for transition effects */
+.custom-transition {
+    transition: all 0.3s ease-in-out; /* Smooth transition for hover effects */
+}
+
+/* Responsive layout adjustments */
+.container {
+    padding: 20px; /* General padding */
+}
+
+@media (max-width: 640px) {
+    .container {
+        padding: 10px; /* Reduce padding for mobile */
+    }
+
+    .flex {
+        flex-direction: column; /* Stack items vertically on small screens */
+    }
+}
