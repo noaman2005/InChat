@@ -1,0 +1,40 @@
+/* styles/globals.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* styles/globals.css */
+/* styles/globals.css */
+body {
+    background-color: black;
+    /* Dark background */
+    color: black;
+    /* Default text color */
+}
+
+h1,
+h2 {
+    font-family: 'Arial', sans-serif;
+    /* Example font */
+}
+
+@keyframes spin-slow {
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+
+    50% {
+        transform: scale(1.1) rotate(180deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+.animate-spin-slow {
+    animation: spin-slow 5s linear infinite;
+}
+
+/* Custom styles for transition effects */
