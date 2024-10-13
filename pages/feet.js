@@ -144,7 +144,7 @@ export default function Feed() {
   return (
     <Layout>
       <header className="p-2 flex items-center justify-between m-2">
-        <h1 className="text-2xl font-bold text-white">Feed</h1>
+        <h1 className="text-2xl font-bold text-white">Feet Pics Only</h1>
       </header>
       <hr className="border-t border-gray-300 mb-6 w-full" />
       <Navbar />
