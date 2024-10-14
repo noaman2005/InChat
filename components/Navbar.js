@@ -36,7 +36,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 flex flex-col w-20 h-screen bg-gray-800 text-white p-6 shadow-lg z-50">
+    <nav className="fixed top-0 left-0 flex flex-col w-20 h-screen bg-gray-800 text-white p-6 shadow-lg z-50 transition-transform duration-300 hover:scale-x-110">
       <div className="mb-10 cursor-pointer flex items-center animate-spin-slow">
         <button onClick={change12}> 
         < svg
