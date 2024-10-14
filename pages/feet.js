@@ -148,7 +148,7 @@ export default function Feed() {
 
   const handleLike = async (theoryId) => {
     const currentUserId = auth.currentUser.uid;
-  
+
     // Optimistically update the UI by updating the specific theory's like count in the state
     setTheories((prevTheories) =>
       prevTheories.map((theory) => {
@@ -156,7 +156,7 @@ export default function Feed() {
           // Check if the user has already liked the theory
           const likedBy = Array.isArray(theory.likedBy) ? theory.likedBy : [];
           const isLiked = likedBy.includes(currentUserId);
-  
+
           // Update like count and likedBy list optimistically
           return {
             ...theory,
@@ -169,16 +169,16 @@ export default function Feed() {
         return theory;
       })
     );
-  
+
     // Update Firestore after optimistically updating the state
     try {
       const theoryRef = doc(db, 'theories', theoryId);
       const theoryDoc = await getDoc(theoryRef);
       const theoryData = theoryDoc.data();
-  
+
       const likedBy = Array.isArray(theoryData.likedBy) ? theoryData.likedBy : [];
       const isLiked = likedBy.includes(currentUserId);
-  
+
       if (isLiked) {
         // If already liked, remove the like
         await updateDoc(theoryRef, {
@@ -196,7 +196,7 @@ export default function Feed() {
       console.error('Error updating like:', error);
     }
   };
-  
+
 
   const handleShare = (theoryId) => {
     const shareUrl = `${window.location.origin}/theory/${theoryId}`;
@@ -244,7 +244,7 @@ export default function Feed() {
                     />
                   )}
                   <p className="p-2 text-black font-semibold">{theory.description}</p>
-                  <div className="flex items-center justify-start mt-4 p-1 space-x-6">
+                  <div className="flex items-center justify-center mt-4 p-1 space-x-6">
                     <div
                       className={`flex items-center space-x-1 cursor-pointer hover:text-red-700 transition-colors duration-200 ${theory.likedBy.includes(auth.currentUser.uid) ? 'text-red-500' : ''}`}
                       onClick={() => handleLike(theory.id)}
@@ -255,20 +255,22 @@ export default function Feed() {
                       <span className="text-gray-600 font-medium">{theory.likes}</span>
                     </div>
                     <div
-                      className="flex items-center space-x-1 cursor-pointer hover:text-blue-700 transition-colors duration-200"
+                      className="flex items-center space-x-1 cursor-pointer hover:text-green-700 transition-colors duration-200"
                       onClick={() => toggleCommentSection(theory.id)}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 12.75h9m-9 3h9m-13.5 4.5h9.75c1.252 0 2.25-1.5 2.25-3v-13.5c0-.621-.504-1.125-1.125-1.125h-16.5A1.125 1.125 0 004.875 4.5v16.5c1.125-1.875 2.775-3.65 4.5-4.5" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
                       </svg>
-                      <span className="text-gray-600 font-medium">Comment</span>
+
+                      <span className="text-gray-600 font-medium"></span>
                     </div>
-                    <div className="flex items-center space-x-1 cursor-pointer hover:text-blue-700 transition-colors duration-200" onClick={() => handleShare(theory.id)}>
+                    <div className="flex items-center ml-auto space-x-1 cursor-pointer hover:text-blue-700 transition-colors duration-200" onClick={() => handleShare(theory.id)}>
+
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 11.25v-6A2.25 2.25 0 0111.25 2.25h4.5a2.25 2.25 0 012.25 2.25v6" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 21.75h18m-9-7.5v9" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
                       </svg>
-                      <span className="text-gray-600 font-medium">Share</span>
+
+                      <span className="text-gray-600 font-medium"></span>
                     </div>
                   </div>
 
