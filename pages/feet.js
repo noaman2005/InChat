@@ -12,9 +12,9 @@ export default function Feed() {
   const [loading, setLoading] = useState(true);
   const [theories, setTheories] = useState([]);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
-  const [activeCommentId, setActiveCommentId] = useState(null); // Track which theory's comment section is active
-  const [commentText, setCommentText] = useState(''); // Track current comment text
-  const [comments, setComments] = useState({}); // Track comments for each theory
+  const [activeCommentId, setActiveCommentId] = useState(null);
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState({});
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -32,26 +32,20 @@ export default function Feed() {
   const fetchTheories = async () => {
     try {
       const theoriesCollection = collection(db, 'theories');
-      const theoriesQuery = query(theoriesCollection, orderBy('createdAt', 'desc')); // Latest first
+      const theoriesQuery = query(theoriesCollection, orderBy('createdAt', 'desc'));
       const theoriesSnapshot = await getDocs(theoriesQuery);
-
       const theoriesList = await Promise.all(
         theoriesSnapshot.docs.map(async (theoryDoc) => {
           const theoryData = theoryDoc.data();
-
-          // Fetch associated comments
           const commentsCollection = collection(db, 'theories', theoryDoc.id, 'comments');
           const commentsQuery = query(commentsCollection, orderBy('createdAt', 'desc'));
           const commentsSnapshot = await getDocs(commentsQuery);
           const theoryComments = await Promise.all(
             commentsSnapshot.docs.map(async (commentDoc) => {
               const commentData = commentDoc.data();
-
-              // Fetch commenter's user data
               const userRef = doc(db, 'users', commentData.userId);
               const userSnap = await getDoc(userRef);
               const userData = userSnap.exists() ? userSnap.data() : { displayName: 'Anonymous' };
-
               return {
                 id: commentDoc.id,
                 ...commentData,
@@ -59,38 +53,23 @@ export default function Feed() {
               };
             })
           );
-
           setComments((prev) => ({
             ...prev,
             [theoryDoc.id]: theoryComments,
           }));
-
-          // Fetch user data
-          if (!theoryData.userId) {
-            console.warn(`No userId associated with theory ID ${theoryDoc.id}`);
-            return {
-              id: theoryDoc.id,
-              ...theoryData,
-              userPhotoURL: '/default-avatar.png',
-              userDisplayName: 'User',
-            };
-          }
-
           const userRef = doc(db, 'users', theoryData.userId);
           const userSnap = await getDoc(userRef);
           const userData = userSnap.exists() ? userSnap.data() : null;
-
           return {
             id: theoryDoc.id,
             ...theoryData,
             userPhotoURL: userData?.photoURL || '/default-avatar.png',
             userDisplayName: userData?.displayName || 'User',
-            likes: theoryData.likes || 0, // Track likes
-            likedBy: theoryData.likedBy || [], // Track users who liked the theory
+            likes: theoryData.likes || 0,
+            likedBy: theoryData.likedBy || [],
           };
         })
       );
-
       setTheories(theoriesList);
     } catch (error) {
       console.error("Error fetching theories:", error);
@@ -121,7 +100,7 @@ export default function Feed() {
   };
 
   const toggleCommentSection = (id) => {
-    setActiveCommentId(activeCommentId === id ? null : id); // Toggle comment section visibility
+    setActiveCommentId(activeCommentId === id ? null : id);
   };
 
   const handleCommentChange = (event) => {
@@ -139,8 +118,8 @@ export default function Feed() {
         userId: auth.currentUser.uid,
       });
       setCommentText('');
-      toggleCommentSection(theoryId); // Close after submitting
-      fetchTheories(); // Re-fetch theories to update comments
+      toggleCommentSection(theoryId);
+      fetchTheories();
     } catch (error) {
       console.error("Error adding comment:", error);
     }
@@ -148,45 +127,33 @@ export default function Feed() {
 
   const handleLike = async (theoryId) => {
     const currentUserId = auth.currentUser.uid;
-
-    // Optimistically update the UI by updating the specific theory's like count in the state
     setTheories((prevTheories) =>
       prevTheories.map((theory) => {
         if (theory.id === theoryId) {
-          // Check if the user has already liked the theory
           const likedBy = Array.isArray(theory.likedBy) ? theory.likedBy : [];
           const isLiked = likedBy.includes(currentUserId);
-
-          // Update like count and likedBy list optimistically
           return {
             ...theory,
             likes: isLiked ? theory.likes - 1 : theory.likes + 1,
-            likedBy: isLiked
-              ? likedBy.filter((id) => id !== currentUserId)
-              : [...likedBy, currentUserId],
+            likedBy: isLiked ? likedBy.filter((id) => id !== currentUserId) : [...likedBy, currentUserId],
           };
         }
         return theory;
       })
     );
 
-    // Update Firestore after optimistically updating the state
     try {
       const theoryRef = doc(db, 'theories', theoryId);
       const theoryDoc = await getDoc(theoryRef);
       const theoryData = theoryDoc.data();
-
       const likedBy = Array.isArray(theoryData.likedBy) ? theoryData.likedBy : [];
       const isLiked = likedBy.includes(currentUserId);
-
       if (isLiked) {
-        // If already liked, remove the like
         await updateDoc(theoryRef, {
           likes: theoryData.likes - 1,
           likedBy: arrayRemove(currentUserId),
         });
       } else {
-        // If not liked, add the like
         await updateDoc(theoryRef, {
           likes: theoryData.likes + 1,
           likedBy: arrayUnion(currentUserId),
@@ -196,7 +163,6 @@ export default function Feed() {
       console.error('Error updating like:', error);
     }
   };
-
 
   const handleShare = (theoryId) => {
     const shareUrl = `${window.location.origin}/theory/${theoryId}`;
@@ -211,91 +177,87 @@ export default function Feed() {
 
   return (
     <Layout>
-      <header className="p-2 flex items-center justify-between m-2">
-        <h1 className="text-2xl font-bold text-white">Feet Pics Only</h1>
+      <header className="p-4 flex items-center justify-between bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold">Feed</h1>
+        <button onClick={handleSignOut} className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-4 rounded transition duration-200">
+          Sign Out
+        </button>
       </header>
-      <hr className="border-t border-gray-300 mb-6 w-full" />
-      <Navbar />
-      <div className="flex justify-center space-x-8">
-        {/* Theories Section */}
-        <div className="max-w-2xl w-full p-4">
-          <main className="flex flex-col mt-2 space-y-4 overflow-y-auto">
+      <div className="mt-6">
+        <Navbar />
+      </div>
+      <div className="flex justify-center space-x-8 mt-4">
+        <div className="max-w-2xl w-full p-4 bg-white rounded-lg shadow-lg">
+          <main className="flex flex-col space-y-6">
             {theories.length === 0 ? (
-              <p>No theories submitted yet.</p>
+              <p className="text-center text-gray-600">No theories submitted yet.</p>
             ) : (
               theories.map((theory) => (
-                <div key={theory.id} className="bg-white p-4 shadow-md rounded-lg">
+                <div key={theory.id} className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
                   <div className="flex items-center space-x-2 mb-2">
                     <img
                       src={theory.userPhotoURL}
                       alt={theory.userDisplayName}
-                      className="w-8 h-8 rounded-full"
+                      className="w-10 h-10 rounded-full"
                     />
-                    <span className="font-bold text-gray-800">{theory.userDisplayName}</span>
+                    <span className="font-semibold text-gray-800">{theory.userDisplayName}</span>
                   </div>
-                  <hr className='w-full border-black' />
-                  <h2 className="font-bold mt-5 text-lg">{theory.title}</h2>
-
+                  <h2 className="font-bold mt-2 text-lg">{theory.title}</h2>
                   {theory.mediaUrl && (
                     <img
                       src={theory.mediaUrl}
                       alt="Theory Media"
-                      className="mt-2 w-full h-auto rounded-lg max-h-96 object-cover"
+                      className="mt-2 w-full h-auto rounded-lg max-h-80 object-cover"
                     />
                   )}
-                  <p className="p-2 text-black font-semibold">{theory.description}</p>
-                  <div className="flex items-center justify-center mt-4 p-1 space-x-6">
+                  <p className="p-2 text-black">{theory.description}</p>
+                  <div className="flex items-center justify-between mt-4 space-x-4">
                     <div
-                      className={`flex items-center space-x-1 cursor-pointer hover:text-red-700 transition-colors duration-200 ${theory.likedBy.includes(auth.currentUser.uid) ? 'text-red-500' : ''}`}
+                      className={`flex items-center space-x-1 cursor-pointer transition-colors duration-200 ${theory.likedBy.includes(auth.currentUser.uid) ? 'text-red-500' : 'text-gray-600'}`}
                       onClick={() => handleLike(theory.id)}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill={theory.likedBy.includes(auth.currentUser.uid) ? 'red' : 'none'} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09A6.35 6.35 0 0116.5 3C19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                      <svg xmlns="http://www.w3.org/2000/svg" fill={theory.likedBy.includes(auth.currentUser.uid) ? 'red' : 'none'} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                       </svg>
-                      <span className="text-gray-600 font-medium">{theory.likes}</span>
+                      <span>{theory.likes} Likes</span>
                     </div>
                     <div
-                      className="flex items-center space-x-1 cursor-pointer hover:text-green-700 transition-colors duration-200"
+                      className="flex items-center cursor-pointer text-gray-600"
                       onClick={() => toggleCommentSection(theory.id)}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 15.5c0 1.66-1.34 3-3 3H7c-1.66 0-3-1.34-3-3V8c0-1.66 1.34-3 3-3h11c1.66 0 3 1.34 3 3v7.5z" />
                       </svg>
-
-                      <span className="text-gray-600 font-medium"></span>
+                      <span>{comments[theory.id]?.length || 0} Comments</span>
                     </div>
-                    <div className="flex items-center ml-auto space-x-1 cursor-pointer hover:text-blue-700 transition-colors duration-200" onClick={() => handleShare(theory.id)}>
-
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                    <div className="flex items-center cursor-pointer text-gray-600" onClick={() => handleShare(theory.id)}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12h6m0 0a4 4 0 00-4-4m4 4a4 4 0 01-4 4m-4-4a4 4 0 00-4-4m0 0a4 4 0 014 4m0 0a4 4 0 014 4" />
                       </svg>
-
-                      <span className="text-gray-600 font-medium"></span>
                     </div>
                   </div>
-
                   {activeCommentId === theory.id && (
-                    <div className="mt-2">
-                      <div className="space-y-2">
-                        {comments[theory.id]?.map((comment) => (
-                          <div key={comment.id} className="p-2 bg-gray-100 rounded-md">
-                            <strong>{comment.userDisplayName}:</strong> {comment.text}
-                          </div>
-                        ))}
-                      </div>
-                      <input
-                        type="text"
+                    <div className="mt-4">
+                      <textarea
                         value={commentText}
                         onChange={handleCommentChange}
-                        className="w-full p-2 border border-gray-300 rounded-md mt-2"
                         placeholder="Add a comment..."
+                        className="w-full p-2 border border-gray-300 rounded-lg"
                       />
                       <button
-                        className="bg-blue-500 text-white px-4 py-2 rounded-md mt-2"
                         onClick={() => handleCommentSubmit(theory.id)}
+                        className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-4 rounded transition duration-200"
                       >
                         Submit Comment
                       </button>
+                      <div className="mt-2">
+                        {comments[theory.id]?.map((comment) => (
+                          <div key={comment.id} className="border-b border-gray-200 py-2">
+                            <strong>{comment.userDisplayName}: </strong>
+                            <span>{comment.text}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -303,24 +265,20 @@ export default function Feed() {
             )}
           </main>
         </div>
-
-        {/* Suggested Users Section */}
-        <div className="w-full max-w-xs p-4 space-y-4">
-          <section className="bg-white p-4 shadow-md rounded-lg">
-            <h2 className="font-bold mb-2">Suggested Users</h2>
-            <ul>
-              {suggestedUsers.map((user) => (
-                <li key={user.id} className="flex items-center space-x-2 mb-2">
-                  <img
-                    src={user.photoURL || '/default-avatar.png'}
-                    alt={user.displayName}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <span>{user.displayName}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+        <div className="max-w-xs w-full p-4 bg-white rounded-lg shadow-lg">
+          <h2 className="text-lg font-semibold mb-4">Suggested Users</h2>
+          <ul>
+            {suggestedUsers.map((user) => (
+              <li key={user.id} className="flex items-center mb-3 border-b border-gray-200 py-2">
+                <img
+                  src={user.photoURL || '/default-avatar.png'}
+                  alt={user.displayName}
+                  className="w-10 h-10 rounded-full mr-3"
+                />
+                <span className="font-semibold">{user.displayName}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </Layout>

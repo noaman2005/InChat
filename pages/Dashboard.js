@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { auth } from '../lib/firebase';
 import { useRouter } from 'next/router';
-import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import Layout from '@/components/Layout';
 import Navbar from '../components/Navbar';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { firebaseStorage } from '../lib/firebase'; // Ensure this is correctly imported
 
 export default function UserDashboard() {
     const router = useRouter();
@@ -14,8 +12,6 @@ export default function UserDashboard() {
     const [user, setUser] = useState(null);
     const [userStats, setUserStats] = useState({ theories: 0, followers: 0, following: 0 });
     const [activities, setActivities] = useState([]);
-    const [bio, setBio] = useState('');
-    const [file, setFile] = useState(null);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -35,11 +31,10 @@ export default function UserDashboard() {
             const userDoc = await getDoc(doc(db, 'users', userId));
             if (userDoc.exists()) {
                 setUser(userDoc.data());
-                setBio(userDoc.data().bio || ''); // Set the initial bio state
                 setUserStats({
                     theories: userDoc.data().theoriesCount || 0,
                     followers: userDoc.data().followersCount || 0,
-                    following: userDoc.data().followingCount || 0
+                    following: userDoc.data().followingCount || 0,
                 });
             }
         } catch (error) {
@@ -52,86 +47,80 @@ export default function UserDashboard() {
             const theoriesCollection = collection(db, 'theories');
             const theoriesSnapshot = await getDocs(theoriesCollection);
 
-            // Filter activities for the logged-in user
             const userActivities = theoriesSnapshot.docs
                 .map(doc => ({ id: doc.id, ...doc.data() }))
                 .filter(theory => theory.userId === userId);
 
-            // Set the activities and dynamically count theories
             setActivities(userActivities);
             setUserStats(prevStats => ({
                 ...prevStats,
-                theories: userActivities.length // Dynamically count user's theories
+                theories: userActivities.length
             }));
         } catch (error) {
             console.error("Error fetching user activities:", error);
         }
     };
 
-    const handleBioChange = (e) => {
-        setBio(e.target.value);
+    const handleEditProfile = () => {
+        router.push('/Edit-Profile');
     };
 
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
+    const handleShareProfile = () => {
+        const profileLink = `${window.location.origin}/profile/${auth.currentUser.uid}`;
+        navigator.clipboard.writeText(profileLink);
+        alert('Profile link copied!');
     };
-
-    const handleUpdateProfile = async () => {
-        const userRef = doc(db, 'users', auth.currentUser.uid);
-        const updates = { bio };
-
-        if (file) {
-            const storageRef = ref(firebaseStorage, `/profilePics/${auth.currentUser.uid}`);
-            await uploadBytes(storageRef, file);
-            const photoURL = await getDownloadURL(storageRef);
-            updates.photoURL = photoURL; // Add photoURL to updates
-        }
-
-        await updateDoc(userRef, updates);
-        setUser(prev => ({ ...prev, bio, photoURL: updates.photoURL || prev.photoURL }));
-        setFile(null); // Reset file after uploading
-    };
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
 
     return (
         <Layout>
-            <header className="p-2 flex items-center justify-between m-2">
-                <h1 className="text-2xl font-bold text-white">User Dashboard</h1>
-            </header>
-            <hr className="border-t border-gray-300 mb-6 w-full" />
             <Navbar />
-            <div className="max-w-3xl mx-auto p-4 bg-white shadow-md rounded-lg">
+            <div className="max-w-3xl mx-auto p-4  text-white">
                 {/* User Profile Section */}
-                <div className="flex items-center space-x-4 mb-4">
-                    <img src={user?.photoURL || '/default-avatar.png'} alt={user?.displayName} className="w-20 h-20 rounded-full" />
-                    <div>
-                        <h2 className="text-xl font-bold">{user?.displayName}</h2>
-                        <textarea
-                            value={bio}
-                            onChange={handleBioChange}
-                            className="border rounded-lg p-2 w-full mt-2"
-                            placeholder="Update your bio..."
-                        />
-                        <input type="file" onChange={handleFileChange} className="mt-2" />
-                        <button onClick={handleUpdateProfile} className="mt-2 bg-blue-500 text-white rounded-lg px-4 py-2">
-                            Update Profile
-                        </button>
-                        <div className="flex space-x-4 mt-2">
-                            <span>{userStats.theories} Theories</span>
-                            <span>{userStats.followers} Followers</span>
-                            <span>{userStats.following} Following</span>
+                <div className="flex items-center space-x-6 mb-4">
+                    <img
+                        src={user?.photoURL || '/default-avatar.png'}
+                        alt={user?.displayName || 'User'}
+                        referrerPolicy="no-referrer"
+                        className="w-24 h-24 p-2 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                        <h2 className="text-2xl font-semibold">{user?.displayName}</h2>
+                        <p className="text-gray-600 mb-2">{user?.bio || 'No bio available'}</p>
+                        <div className="flex space-x-4 mb-2">
+                            <div className="text-center">
+                                <span className="block text-lg font-semibold">{userStats.theories}</span>
+                                <span className="text-gray-500 text-sm">Posts</span>
+                            </div>
+                            <div className="text-center">
+                                <span className="block text-lg font-semibold">{userStats.followers}</span>
+                                <span className="text-gray-500 text-sm">Followers</span>
+                            </div>
+                            <div className="text-center">
+                                <span className="block text-lg font-semibold">{userStats.following}</span>
+                                <span className="text-gray-500 text-sm">Following</span>
+                            </div>
+                        </div>
+                        <div className="flex space-x-4">
+                            <button
+                                onClick={handleEditProfile}
+                                className="bg-blue-500 text-white font-semibold px-4 py-2 rounded-md hover:bg-blue-600 transition duration-200"
+                            >
+                                Edit Profile
+                            </button>
+                            <button
+                                onClick={handleShareProfile}
+                                className="bg-gray-100 text-gray-700 font-semibold px-4 py-2 rounded-md hover:bg-gray-200 transition duration-200"
+                            >
+                                Share Profile
+                            </button>
                         </div>
                     </div>
                 </div>
-
                 {/* Activity Feed Section */}
-                <h2 className="text-lg font-bold mb-2">Recent Activities</h2>
-                <div className="space-y-4">
+                <h2 className="text-lg font-bold mb-2">Theories</h2>
+                <div className="space-y-4 text-black">
                     {activities.length === 0 ? (
-                        <p>No recent activities found.</p>
+                        <p className="text-red-500">No theories found.</p>
                     ) : (
                         activities.map(activity => (
                             <div key={activity.id} className="p-4 bg-gray-100 rounded-lg shadow">
