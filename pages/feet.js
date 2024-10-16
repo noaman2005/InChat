@@ -177,109 +177,100 @@ export default function Feed() {
 
   return (
     <Layout>
-      <header className="p-4 flex items-center justify-between bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold">Feed</h1>
-        <button onClick={handleSignOut} className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-4 rounded transition duration-200">
-          Sign Out
-        </button>
+      <header className="p-4 flex  m-2">
+        <h1 className="text-2xl font-bold text-white">Feed</h1>
       </header>
-      <div className="mt-6">
+      <hr className="border-gray-300 w-full" />
+      <div className="flex mt-6">
         <Navbar />
-      </div>
-      <div className="flex justify-center space-x-8 mt-4">
-        <div className="max-w-2xl w-full p-4 bg-white rounded-lg shadow-lg">
-          <main className="flex flex-col space-y-6">
-            {theories.length === 0 ? (
-              <p className="text-center text-gray-600">No theories submitted yet.</p>
-            ) : (
-              theories.map((theory) => (
-                <div key={theory.id} className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <img
-                      src={theory.userPhotoURL}
-                      alt={theory.userDisplayName}
-                      className="w-10 h-10 rounded-full"
-                    />
-                    <span className="font-semibold text-gray-800">{theory.userDisplayName}</span>
-                  </div>
-                  <h2 className="font-bold mt-2 text-lg">{theory.title}</h2>
-                  {theory.mediaUrl && (
-                    <img
-                      src={theory.mediaUrl}
-                      alt="Theory Media"
-                      className="mt-2 w-full h-auto rounded-lg max-h-80 object-cover"
-                    />
-                  )}
-                  <p className="p-2 text-black">{theory.description}</p>
-                  <div className="flex items-center justify-between mt-4 space-x-4">
-                    <div
-                      className={`flex items-center space-x-1 cursor-pointer transition-colors duration-200 ${theory.likedBy.includes(auth.currentUser.uid) ? 'text-red-500' : 'text-gray-600'}`}
-                      onClick={() => handleLike(theory.id)}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill={theory.likedBy.includes(auth.currentUser.uid) ? 'red' : 'none'} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                      </svg>
-                      <span>{theory.likes} Likes</span>
-                    </div>
-                    <div
-                      className="flex items-center cursor-pointer text-gray-600"
-                      onClick={() => toggleCommentSection(theory.id)}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 15.5c0 1.66-1.34 3-3 3H7c-1.66 0-3-1.34-3-3V8c0-1.66 1.34-3 3-3h11c1.66 0 3 1.34 3 3v7.5z" />
-                      </svg>
-                      <span>{comments[theory.id]?.length || 0} Comments</span>
-                    </div>
-                    <div className="flex items-center cursor-pointer text-gray-600" onClick={() => handleShare(theory.id)}>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12h6m0 0a4 4 0 00-4-4m4 4a4 4 0 01-4 4m-4-4a4 4 0 00-4-4m0 0a4 4 0 014 4m0 0a4 4 0 014 4" />
-                      </svg>
-                    </div>
-                  </div>
-                  {activeCommentId === theory.id && (
-                    <div className="mt-4">
-                      <textarea
-                        value={commentText}
-                        onChange={handleCommentChange}
-                        placeholder="Add a comment..."
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                      />
-                      <button
-                        onClick={() => handleCommentSubmit(theory.id)}
-                        className="mt-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-4 rounded transition duration-200"
-                      >
-                        Submit Comment
-                      </button>
-                      <div className="mt-2">
-                        {comments[theory.id]?.map((comment) => (
-                          <div key={comment.id} className="border-b border-gray-200 py-2">
-                            <strong>{comment.userDisplayName}: </strong>
-                            <span>{comment.text}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+        <main className="flex-grow max-w-2xl p-4 mx-auto">
+          {theories.length === 0 ? (
+            <p className="text-center text-gray-600">No theories submitted yet.</p>
+          ) : (
+            theories.map((theory) => (
+              <div key={theory.id} className="bg-white p-4 rounded-lg shadow-md mb-4 transition-shadow duration-300 hover:shadow-lg">
+                <div className="flex items-center mb-2">
+                  <img
+                    src={theory.userPhotoURL}
+                    alt={theory.userDisplayName}
+                    className="w-10 h-10 rounded-full mr-2"
+                  />
+                  <span className="font-semibold">{theory.userDisplayName}</span>
                 </div>
-              ))
-            )}
-          </main>
-        </div>
-        <div className="max-w-xs w-full p-4 bg-white rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">Suggested Users</h2>
-          <ul>
+                <h2 className="font-bold text-lg">{theory.title}</h2>
+                {theory.mediaUrl && (
+                  <img
+                    src={theory.mediaUrl}
+                    alt="Theory Media"
+                    className="mt-2 w-full h-auto rounded-lg max-h-80 object-cover"
+                  />
+                )}
+                <p className="text-gray-800 mt-2">{theory.description}</p>
+                <div className="flex items-center justify-between mt-4 space-x-4">
+                  <div
+                    className={`flex items-center space-x-1 cursor-pointer transition-colors duration-200 ${theory.likedBy.includes(auth.currentUser.uid) ? 'text-red-500' : 'text-gray-600'}`}
+                    onClick={() => handleLike(theory.id)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill={theory.likedBy.includes(auth.currentUser.uid) ? 'red' : 'none'} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                    <span>{theory.likes} Likes</span>
+                  </div>
+                  <div
+                    className="flex items-center cursor-pointer text-gray-600"
+                    onClick={() => toggleCommentSection(theory.id)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                    </svg>
+                    <span>{comments[theory.id]?.length || 0} Comments</span>
+                  </div>
+                  <div className="flex items-center cursor-pointer text-gray-600" onClick={() => handleShare(theory.id)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                    </svg>
+                  </div>
+                </div>
+                {activeCommentId === theory.id && (
+                  <div className="mt-4">
+                    <textarea
+                      value={commentText}
+                      onChange={handleCommentChange}
+                      rows="3"
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                      placeholder="Add a comment..."
+                    />
+                    <button
+                      onClick={() => handleCommentSubmit(theory.id)}
+                      className="mt-2 bg-blue-500 hover:bg-blue-600 text-white py-1 px-4 rounded transition duration-200"
+                    >
+                      Submit
+                    </button>
+                    <div className="mt-2">
+                      {comments[theory.id]?.map((comment) => (
+                        <div key={comment.id} className="flex items-start space-x-2 mb-2">
+                          <span className="font-semibold">{comment.userDisplayName}</span>
+                          <span>{comment.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </main>
+        <aside className="w-1/3 p-4">
+          <h2 className="font-bold text-white text-lg">Suggested Users</h2>
+          <ul className="mt-2 space-y-2">
             {suggestedUsers.map((user) => (
-              <li key={user.id} className="flex items-center mb-3 border-b border-gray-200 py-2">
-                <img
-                  src={user.photoURL || '/default-avatar.png'}
-                  alt={user.displayName}
-                  className="w-10 h-10 rounded-full mr-3"
-                />
+              <li key={user.id} className="flex items-center space-x-2 bg-white p-2 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                <img src={user.photoURL || '/default-avatar.png'} alt={user.displayName} className="w-8 h-8 rounded-full" />
                 <span className="font-semibold">{user.displayName}</span>
               </li>
             ))}
           </ul>
-        </div>
+        </aside>
       </div>
     </Layout>
   );
